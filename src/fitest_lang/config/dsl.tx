@@ -1,0 +1,87 @@
+// program
+Program: TimePriority | TimePriorityBase 
+       | TaskPriority | TaskPriorityBase
+       | TimeCappedTask | MovementSeq ; 
+
+// movement cycle types 
+TaskPriority: (reps=Repetition ':' seq=TimePriorityBase ';' rest=Rest?
+             | reps=Repetition ':' seq=TimeCappedTask ';' rest=Rest?
+	         | 'for' reps=Variable ':' seq=TimePriorityBase ';' rest=Rest?
+	         | 'for' reps=Variable ':' seq=TimeCappedTask ';' rest=Rest?)+ ; 
+TaskPriorityBase: (reps=Repetition ':' seq=MovementSeq ';' rest=Rest?
+		 | 'for' reps=Variable ':' seq=MovementSeq ';' rest=Rest?)+ ;
+
+TimeCappedTask: ('in' time=Time ':' seq=MovementSeq ';' rest=Rest?
+	           | 'in' time=Time ':' seq=TaskPriorityBase ';' rest=Rest?)+ ;
+
+TimePriority: ('AMRAP' time=Time ':' seq=TaskPriorityBase ';' rest=Rest?)+ ; 
+TimePriorityBase: ('AMRAP' time=Time ':' seq=MovementSeq ';' rest=Rest?)+ ;
+ 
+// movement sequences 
+MovementSeq: (movements+=Movement rest=Rest?)+ ;
+Movement: EnduranceMovement | ObjectMovement | GymnasticMovement ;
+
+// variable declaration
+Variable: name=ID 'in' (ints=INT)+ ; 
+
+// base movement types 
+// rest
+Rest: magnitude=Time 'rest' ;
+RestType: 'rest' ; 
+
+// endurance 
+EnduranceMovement: magnitude=Time mvmt_type=EnduranceMovementType 	
+		 | magnitude=Length mvmt_type=EnduranceMovementType 
+		 | magnitude=Work mvmt_type=EnduranceMovementType ; 
+EnduranceMovementType: mvmt_type='run' | mvmt_type='swim' | mvmt_type='bike' | mvmt_type='ski' 
+		     | mvmt_type='airbike' | mvmt_type='row' ;
+
+// object   
+ObjectMovement: magnitude=Value mvmt_type=ObjectMovementType 
+	      | magnitude=Time mvmt_type=ObjectMovementType  ; 
+ObjectMovementType: weight=Weight (obj='barbell' | obj='dumbells' | obj='dumbell' | obj='kettlebells' | obj='kettlebell') 
+		    (mvmt_type=/clean(_and_jerk)?/ | mvmt_type='front_squat' | mvmt_type='deadlift' 
+		   | mvmt_type=/sumodeadlift(_highpull)?/ | mvmt_type='push_press' 
+		   | mvmt_type='push_jerk' | mvmt_type='split_jerk' | mvmt_type='shoulder_to_overhead' 
+		   | mvmt_type='ground_to_overhead' | mvmt_type='hang_clean' | mvmt_type='thruster')
+	         | weight=Weight obj='barbell' mvmt_type='back_squat'
+	         | weight=Weight (obj='barbell' | obj='dumbell' | obj='kettlebell') 
+		   (mvmt_type='snatch' | mvmt_type='overhead_squat')
+	         | weight=Weight (obj='barbell' | obj='dumbells' | obj='kettlebells') mvmt_type='bench_press'
+                 | weight=Weight (obj='kettlebell' | obj='dumbbell') mvmt_type='swing'
+	         | weight=Weight height=Length mvmt_type='wallball' ; 
+
+// gymnastic 
+GymnasticMovement: magnitude=Length mvmt_type='handstand_walk'
+		 | magnitude=Time mvmt_type='handstand_walk'
+		 | magnitude=Time mvmt_type=GymnasticMovementType
+		 | magnitude=Value mvmt_type=GymnasticMovementType ; 
+		 
+GymnasticMovementType: mvmt_type='pushup' | mvmt_type='pullup' | mvmt_type=/burpee(_pullup)?/ 
+		     | mvmt_type='situp' | mvmt_type='ghd_situp' | mvmt_type='knee_to_elbow' 
+		     | mvmt_type='toe_to_bar' | mvmt_type='back_extension' | mvmt_type='hip_extension' 
+		     | mvmt_type='dip' | mvmt_type='muscle_up' 
+		     | mvmt_type='pistol' | mvmt_type='squat' | mvmt_type='handstand_pushup' 
+		     | mvmt_type='double_under' | height=Length mvmt_type='box_jump' ; 
+
+/// physical quantities
+Time: magnitude=Value units=TimeUnit ;
+Work: magnitude=Value units=EnergyUnit ;
+Length: magnitude=Value units=LengthUnit ;
+Weight: magnitude=Value units=WeightUnit ;
+Repetition: magnitude=Value units=RepetitionUnit ; 
+
+// physical quantity units 
+EnergyUnit: 'cal' | 'J' ;
+TimeUnit: 'sec' | 'min' | 'hr' ;
+RepetitionUnit: 'rounds' | 'cycles' | 'reps' ;
+WeightUnit: 'lb' | 'pound' | 'kg' | 'kilogram' ; 
+LengthUnit: 'meter' | 'km' | 'mile' | 'ft' | 'inch' ;
+
+// expressions
+Expression: expr=Sum ;
+Sum: left=Product ((op='+' | op='-') right=Product)* ;
+Product: left=Value ((op='*' | op='/') right=Value)* ;
+Value: val=INT | val=FLOAT | type=[Variable] | ('(' val=Expression ')') ; 
+
+//eof

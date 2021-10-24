@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "fitest_lang"
+version = "0.1.0"
+description = "DSL for functional fitness programs"
+authors = ["tmfarrell <tfarrell01@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+Pint = "^0.17"
+textX = "^2.3.0"
+pandas = "^1.3.4"
+numpy = "*"
+
+[tool.poetry.dev-dependencies]
+black = "*"
+pytest = "*"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
