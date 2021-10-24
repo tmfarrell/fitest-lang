@@ -15,6 +15,7 @@ numpy = "*"
 [tool.poetry.dev-dependencies]
 black = "*"
 pytest = "*"
+ipython = "*"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

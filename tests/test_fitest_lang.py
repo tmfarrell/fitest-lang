@@ -1,10 +1,7 @@
-import importlib.resources
-
 import pytest
-import textx
 
 from fitest_lang.athlete import Athlete
-import fitest_lang.config
+import fitest_lang.dsl
 from fitest_lang.program import Program
 from fitest_lang.quantity import Weight, Length
 
@@ -42,23 +39,17 @@ TEST_PROGRAMS = [
 
 TEST_ATHLETE = Athlete("Tim", Weight(160, "lb"), Length(67, "in"))
 
-def load_dsl():
-    with importlib.resources.path(fitest_lang.config, 'dsl.tx') as path:
-        return textx.metamodel_from_file(path)
-
-DSL = load_dsl()
-
 @pytest.mark.parametrize("program_str", TEST_PROGRAMS)
 def test_dsl(program_str):
     print('\n\n' + program_str)
-    r = DSL.model_from_str(program_str)
+    r = fitest_lang.dsl.parse(program_str)
     print("\nvalid: " + str(r))
     return
 
 @pytest.mark.parametrize("program_str", TEST_PROGRAMS)
 def test_str_to_ir(program_str):
     print("\ntest:\n" + program_str + "\n")
-    s = Program.ir_to_str(DSL.model_from_str(program_str)).strip()
+    s = Program.ir_to_str(fitest_lang.dsl.parse(program_str)).strip()
     print("ir_to_str:\n" + s + "\n")
     print("test == ir_to_str: " + str(program_str == s))
     print()
