@@ -16,9 +16,17 @@ In [1]: import fitest_lang.dsl
 
 In [2]: from fitest_lang.program import Program
 
-In [3]: p = Program.from_ir(fitest_lang.dsl.parse("for N in 21 15 9:\nN 95 lb barbell thruster\nN pullup ;"))
+In [3]: example = "for N in 21 15 9:\nN 95 lb barbell thruster\nN pullup ;"
 
-In [4]: print(p.to_json())
+In [4]: print('\n' + example)
+
+for N in 21 15 9:
+N 95 lb barbell thruster
+N pullup ;
+
+In [5]: p = Program.from_ir(fitest_lang.dsl.parse(example))
+
+In [6]: print(p.to_json())
 {
  "type": "TaskPriorityBase",
  "ir": {
