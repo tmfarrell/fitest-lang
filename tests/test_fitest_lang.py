@@ -1,4 +1,5 @@
 import pytest
+import editdistance
 
 from fitest_lang.athlete import Athlete
 import fitest_lang.dsl
@@ -41,15 +42,18 @@ TEST_ATHLETE = Athlete("Tim", Weight(160, "lb"), Length(67, "in"))
 
 @pytest.mark.parametrize("program_str", TEST_PROGRAMS)
 def test_dsl(program_str):
-    print('\n\n' + program_str)
+    print(f"\n\n{program_str}")
     r = fitest_lang.dsl.parse(program_str)
-    print("\nvalid: " + str(r))
+    print(f"\nvalid: {str(r)}")
     return
 
 @pytest.mark.parametrize("program_str", TEST_PROGRAMS)
 def test_str_to_ir(program_str):
-    print("\ntest:\n" + program_str + "\n")
-    s = Program.ir_to_str(fitest_lang.dsl.parse(program_str)).strip()
-    print("ir_to_str:\n" + s + "\n")
-    print("test == ir_to_str: " + str(program_str == s))
+    print(f"\ntest:\n{program_str}\n")
+    p = Program.from_ir(fitest_lang.dsl.parse(program_str))
+    s = str(p).strip()
+    print(type(p))
+    print(f"ir_to_str:\n{s}\n")
+    dist = editdistance.eval(program_str, s)
+    assert dist <= 10, f"editdistance(test, ir_to_str) must be <= 10: {dist}"
     print()

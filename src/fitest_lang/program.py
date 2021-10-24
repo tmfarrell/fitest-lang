@@ -26,6 +26,7 @@ class ProgramBase(FitestBaseObject, FitestObject):
         elif 'Variable' in t:
             return Variable
 
+
 class Program(ProgramBase):
     def __init__(self, program, name=None, time=None, reps=None):
         self.program = program
@@ -588,6 +589,11 @@ class TimePriorityBase(ProgramBase):
         for i in range(num_in_seq):
             s += ("AMRAP " + self.time[i].__str__() + ":\n"
                   + self.seq[i].__str__() + "\n")
+            try:
+                rest = self.rest[i]
+                s += str(rest) + '\n\n'
+            except:
+                pass
         return s
 
     def __repr__(self):

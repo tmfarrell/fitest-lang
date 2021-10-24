@@ -1,12 +1,12 @@
 
-### fitest_lang
+## fitest_lang
 
 A DSL for converting human-readable functional fitness programs 
 into JSON data objects that can be saved to a datastore and analyzed
 
 Here's an example: 
 
-```bash 
+```python
 $ poetry run ipython
 Python 3.8.5 (default, Sep  4 2020, 02:22:02) 
 Type 'copyright', 'credits' or 'license' for more information
@@ -89,7 +89,7 @@ In [6]: print(p.to_json())
 }
 ```
 
-#### testing 
+### testing 
 
 To run tests, do 
 
