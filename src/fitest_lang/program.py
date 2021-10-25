@@ -382,7 +382,7 @@ class TimePriority(ProgramBase):
         )
 
 
-class TimeCappedTask(FitestBaseObject, FitestObject):
+class TimeCappedTask(ProgramBase):
     def __init__(self, time, seq, rest):
         self.time = time
         self.seq = seq
