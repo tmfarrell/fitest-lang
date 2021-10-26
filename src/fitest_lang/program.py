@@ -110,9 +110,9 @@ class TaskPriority(ProgramBase):
                     env = {reps.name: reps.ints[j]}
                 else:
                     env = {}
-                ts = ts + [seq.get_time(env=env)]
+                ts += [seq.get_time(env=env)]
             if not rest is None:
-                ts = ts + [rest.get_time(env=env)]
+                ts += [rest.get_time(env=env)]
         return ts
 
     def get_reps(self):
@@ -123,7 +123,7 @@ class TaskPriority(ProgramBase):
                     env = {reps.name: reps.ints[j]}
                 else:
                     env = {}
-                rs = rs + [seq.get_reps(env=env)]
+                rs += [seq.get_reps(env=env)]
         return rs
 
     def get_num_rds(self):
@@ -203,7 +203,10 @@ class TaskPriority(ProgramBase):
         for i in range(len(self.reps)):
             reps_type = type(self.reps[i])
             if reps_type == Repetition:
-                num_rds = self.reps[i].magnitude
+                if type(self.reps[i].magnitude) == Value:
+                    num_rds = self.reps[i].magnitude.val
+                else:
+                    num_rds = self.reps[i].magnitude
                 for j in range(num_rds):
                     ts, ss = zip(*self.seq[i].to_timer_objs())
                     ss = [

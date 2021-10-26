@@ -1,3 +1,5 @@
+import json
+
 import pytest
 import editdistance
 
@@ -47,6 +49,7 @@ def test_dsl(program_str):
     print(f"\nvalid: {str(r)}")
     return
 
+
 @pytest.mark.parametrize("program_str", TEST_PROGRAMS)
 def test_str_to_ir(program_str):
     print(f"\ntest:\n{program_str}\n")
@@ -57,3 +60,12 @@ def test_str_to_ir(program_str):
     dist = editdistance.eval(program_str, s)
     assert dist <= 10, f"editdistance(test, ir_to_str) must be <= 10: {dist}"
     print()
+
+
+@pytest.mark.parametrize("program_str", TEST_PROGRAMS)
+def test_ir_to_json(program_str):
+    print(f"\ntest:\n{program_str}\n")
+    p = Program.from_ir(fitest_lang.dsl.parse(program_str))
+    print(type(p))
+    j = json.loads(p.to_json())
+    assert type(j) == dict, "invalid json"

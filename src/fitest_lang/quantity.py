@@ -202,7 +202,10 @@ class Time(PhysicalQuantity):
             return self.__class__()
 
     def to_dict(self, env={}):
-        m = self.magnitude.eval_exprs(env=env)
+        if not type(self.magnitude) == int:
+            m = self.magnitude.eval_exprs(env=env)
+        else:
+            m = self.magnitude
         # acta_grammar.Time => {'hours': hh, 'minutes': mm, 'seconds': ss}
         if self.units in ["hr", "hour"]:
             return {"hours": m, "minutes": 0, "seconds": 0}

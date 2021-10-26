@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fitest_lang"
-version = "0.1.0"
+version = "0.2.0"
 description = "DSL for functional fitness programs"
 authors = ["tmfarrell <tfarrell01@gmail.com>"]
 license = "MIT"
