@@ -5,7 +5,7 @@ from types import FunctionType
 
 from .baseobject import FitestObject, FitestBaseObject
 from .expression import Value, Variable
-from .quantity import Quantity, Work, Time, Weight, Length
+from .quantity import Quantity, Work, Time, Weight, Length, Repetition
 
 
 class MovementBase(FitestBaseObject, FitestObject):

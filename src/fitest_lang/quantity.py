@@ -42,10 +42,10 @@ class PhysicalQuantity(PhysicalQuantityBase):
     def to_str(self, env=None, eval_exprs=False):
         try:
             return (
-                self.magnitude.to_str(env=env, eval_exprs=eval_exprs) + " " + self.units
+                self.magnitude.to_str(env=env, eval_exprs=eval_exprs) + " " + str(self.units)
             )
         except:
-            return str(self.magnitude) + " " + self.units
+            return str(self.magnitude) + " " + str(self.units)
 
     def to_ir(self):
         return {
@@ -110,6 +110,10 @@ class PhysicalQuantity(PhysicalQuantityBase):
             magnitude=cls.textx_type_class(ir.magnitude).from_ir(ir.magnitude),
             units=ir.units,
         )
+
+    @classmethod
+    def from_quantity(cls, q, num_decimals=1): 
+        return cls(round(q.magnitude, num_decimals), q.units)
 
 
 class Length(PhysicalQuantity):
