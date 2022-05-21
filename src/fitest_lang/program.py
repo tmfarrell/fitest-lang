@@ -8,7 +8,7 @@ import pandas as pd
 
 from .baseobject import FitestBaseObject, FitestObject
 from .expression import Variable, Value
-from .quantity import Repetition, Time
+from .quantity import Repetition, Time, Work
 from .movement import MovementSeq, Rest
 
 
@@ -47,7 +47,11 @@ class Program(ProgramBase):
         return self.program.get_reps()
 
     def get_work(self, athlete):
-        return self.program.get_work(athlete)
+        quantity_or_fcn = self.program.get_work(athlete)
+        if type(quantity_or_fcn) == FunctionType: 
+            return quantity_or_fcn
+        else: 
+            return Work.from_quantity(quantity_or_fcn)
 
     def get_power(self, athlete, score):
         return self.program.get_power(athlete, score)
