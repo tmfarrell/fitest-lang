@@ -1,12 +1,13 @@
 import json
+from types import FunctionType
 
 import pytest
 import editdistance
 
 from fitest_lang.athlete import Athlete
 import fitest_lang.dsl
-from fitest_lang.program import Program
-from fitest_lang.quantity import Weight, Length
+from fitest_lang.program import Program, TaskPriorityBase, TaskPriority, TimePriorityBase, TimePriority
+from fitest_lang.quantity import Weight, Length, Work
 
 
 TEST_PROGRAMS = [
@@ -46,17 +47,17 @@ TEST_ATHLETE = Athlete("Tim", Weight(160, "lb"), Length(67, "in"))
 def test_dsl(program_str):
     print(f"\n\n{program_str}")
     r = fitest_lang.dsl.parse(program_str)
-    print(f"\nvalid: {str(r)}")
+    print(f"valid: {str(r)}")
     return
 
 
 @pytest.mark.parametrize("program_str", TEST_PROGRAMS)
 def test_str_to_ir(program_str):
-    print(f"\ntest:\n{program_str}\n")
+    print(f"\ntest:\n{program_str}")
     p = Program.from_ir(fitest_lang.dsl.parse(program_str))
     s = str(p).strip()
     print(type(p))
-    print(f"ir_to_str:\n{s}\n")
+    print(f"\nir_to_str:\n{s}")
     dist = editdistance.eval(program_str, s)
     assert dist <= 10, f"editdistance(test, ir_to_str) must be <= 10: {dist}"
     print()
@@ -64,8 +65,16 @@ def test_str_to_ir(program_str):
 
 @pytest.mark.parametrize("program_str", TEST_PROGRAMS)
 def test_ir_to_json(program_str):
-    print(f"\ntest:\n{program_str}\n")
+    print(f"\ntest:\n{program_str}")
     p = Program.from_ir(fitest_lang.dsl.parse(program_str))
     print(type(p))
     j = json.loads(p.to_json())
     assert type(j) == dict, "invalid json"
+
+
+@pytest.mark.parametrize("program_str", TEST_PROGRAMS)
+def test_program_get_work(program_str):
+    program = Program(Program.from_ir(fitest_lang.dsl.parse(program_str)), name='test_workout')
+    work = program.get_work(TEST_ATHLETE)
+    print(f"\nprogram type: {type(program.program)}")
+    print(f"work: {work}")
