@@ -1,5 +1,5 @@
 
-## fitest_lang
+## fitest-lang
 
 A DSL for converting human-readable functional fitness programs 
 into data objects that can be saved and analyzed.
