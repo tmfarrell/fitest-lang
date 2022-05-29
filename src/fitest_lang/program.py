@@ -59,7 +59,7 @@ class Program(ProgramBase):
     def describe(self, by="mvmt_category"):
         return self.program.describe(by=by)
 
-    def to_ir(self, top=False, env=None, eval_exprs=False):
+    def to_ir(self, top=False, env={}, eval_exprs=False):
         ir = {"Program": self.program.to_ir()}
         if top:
             return {
@@ -195,7 +195,7 @@ class TaskPriority(ProgramBase):
     def to_list(self):
         return list(it.zip_longest(self.reps, self.seq, self.rest))
 
-    def to_ir(self, top=False, env=None, eval_exprs=False):
+    def to_ir(self, top=False, env={}, eval_exprs=False):
         ir = {
             "TaskPriority": {
                 "reps": [r.to_ir() for r in self.reps],
@@ -627,7 +627,7 @@ class TaskPriorityBase(ProgramBase):
         if sum(rs.values()) > 1.0:
             return dict(
                 **{"work": {k: v for k, v in rs.items() if k != "rest"}},
-                **{"rest": rs["rest"]}
+                **{"rest": rs["rest"]} if "rest" is rs else {}
             )
         else:
             return rs
