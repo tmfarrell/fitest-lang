@@ -41,7 +41,7 @@ class FitestObject:
         return cls.from_ir(ir).__str__()
 
     @classmethod
-    def ir_to_timer_objs(cls, ir, env=None, eval_exprs=False):
+    def ir_to_timer_objs(cls, ir, env={}, eval_exprs=False):
         return cls.from_ir(ir).to_timer_objs(env=env, eval_exprs=eval_exprs)
 
     def to_json(self, top=True):

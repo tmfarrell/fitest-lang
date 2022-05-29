@@ -17,7 +17,7 @@ class Expression(ExpressionBase):
     def eval_exprs(self, env={}):
         return self.expr.eval_exprs(env=env)
 
-    def to_str(self, env=None, eval_exprs=False):
+    def to_str(self, env={}, eval_exprs=False):
         return self.expr.to_str(env=env, eval_exprs=eval_exprs)
 
     def to_ir(self):
@@ -43,7 +43,7 @@ class Sum(ExpressionBase):
     def eval_exprs(self, env={}):
         return eval(self.to_str(env=env, eval_exprs=True))
 
-    def to_str(self, env=None, eval_exprs=False):
+    def to_str(self, env={}, eval_exprs=False):
         s = self.left.to_str(env=env, eval_exprs=eval_exprs)
         if self.right:
             products = map(
@@ -96,7 +96,7 @@ class Product(ExpressionBase):
         self.ops = ops
         self.right = right
 
-    def to_str(self, env=None, eval_exprs=False):
+    def to_str(self, env={}, eval_exprs=False):
         s = self.left.to_str(env=env, eval_exprs=eval_exprs)
         if self.right:
             vals = map(lambda r: r.to_str(env=env, eval_exprs=eval_exprs), self.right)
@@ -144,7 +144,7 @@ class Value(ExpressionBase):
     def __init__(self, val):
         self.val = val
 
-    def to_str(self, env=None, eval_exprs=False):
+    def to_str(self, env={}, eval_exprs=False):
         if type(self.val) == Expression:
             return self.val.to_str(env=env, eval_exprs=eval_exprs)
         elif eval_exprs and env and type(self.val) == str:

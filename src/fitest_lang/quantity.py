@@ -39,7 +39,7 @@ class PhysicalQuantity(PhysicalQuantityBase):
         else:
             return Quantity(self.magnitude, self.units)
 
-    def to_str(self, env=None, eval_exprs=False):
+    def to_str(self, env={}, eval_exprs=False):
         try:
             return (
                 self.magnitude.to_str(env=env, eval_exprs=eval_exprs) + " " + str(self.units)
@@ -140,7 +140,7 @@ class Repetition(PhysicalQuantity):
     def to_list(self):
         return list(range(self.magnitude.eval_exprs()))
 
-    def to_str(self, env=None, eval_exprs=False):
+    def to_str(self, env={}, eval_exprs=False):
         if not self.is_variable:
             return (
                 self.magnitude.to_str(env=env, eval_exprs=eval_exprs) + " " + self.units
@@ -167,7 +167,7 @@ class Time(PhysicalQuantity):
         self.units = units
         self.is_variable = not (self.magnitude and self.units)
 
-    def to_str(self, env=None, eval_exprs=False):
+    def to_str(self, env={}, eval_exprs=False):
         if not self.is_variable:
             return (
                 self.magnitude.to_str(env=env, eval_exprs=eval_exprs) + " " + self.units

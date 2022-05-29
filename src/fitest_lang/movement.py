@@ -1,7 +1,10 @@
 import datetime
 import itertools as it
+import re 
 import sys
 from types import FunctionType
+
+import numpy as np
 
 from .baseobject import FitestObject, FitestBaseObject
 from .expression import Value, Variable
@@ -36,9 +39,9 @@ class Rest(MovementBase):
     def get_time(self, env={}):
         return self.magnitude.eval_exprs(env=env)
 
-    def get_reps(self, rep_len=Quantity(15, "sec")):
+    def get_reps(self, rep_len=Quantity(15, "sec"), env={}):
         return int(
-            Quantity(self.magnitude.magnitude.eval_exprs(), self.magnitude.units)
+            Quantity(self.magnitude.magnitude.eval_exprs(env=env), self.magnitude.units)
             / rep_len
         )
 
@@ -160,7 +163,7 @@ class MovementSeq(MovementBase):
     def mvmt_reps_list(self):
         return [m.magnitude for m in self.movements]
 
-    def to_timer_objs(self, env=None, eval_exprs=False):
+    def to_timer_objs(self, env={}, eval_exprs=False):
         s = ""
         times, seq_strs = [], []
         if len(self.rest) > 1:
@@ -187,7 +190,7 @@ class MovementSeq(MovementBase):
                 seq_strs = seq_strs + ["rest"]
         return list(zip(times, seq_strs))
 
-    def to_str(self, include_rest=True, env=None, eval_exprs=False):
+    def to_str(self, include_rest=True, env={}, eval_exprs=False):
         s = ""
         classes = globals()
         if len(self.rest) > 1:
@@ -362,7 +365,7 @@ class EnduranceMovement(Movement):
                 pass"""
                 return Quantity(0, "cal")
 
-    def to_str(self, env=None, eval_exprs=False):
+    def to_str(self, env={}, eval_exprs=False):
         try:
             return (
                 self.magnitude.to_str(env=env, eval_exprs=eval_exprs)
@@ -448,6 +451,7 @@ class ObjectMovement(Movement):
             "bench_press": "upper",
             "swing": "full",
             "wallball": "full",
+            "overhead_squat": "full"
         }[self.mvmt_type]
 
     def get_work(self, athlete, env={}):
@@ -525,7 +529,7 @@ class ObjectMovement(Movement):
                     * distance
                 )
 
-    def to_str(self, env=None, eval_exprs=False):
+    def to_str(self, env={}, eval_exprs=False):
         if not self.height:
             return (
                 self.magnitude.to_str(env=env, eval_exprs=eval_exprs)
@@ -736,7 +740,7 @@ class GymnasticMovement(Movement):
             }
         }
 
-    def to_str(self, env=None, eval_exprs=False):
+    def to_str(self, env={}, eval_exprs=False):
         return (
             self.magnitude.to_str(env=env, eval_exprs=eval_exprs)
             + " "
@@ -756,7 +760,7 @@ class GymnasticMovementType(MovementBase):
         self.mvmt_type = mvmt_type
         self.height = height
 
-    def to_str(self, env=None, eval_exprs=False):
+    def to_str(self, env={}, eval_exprs=False):
         if not self.height:
             return self.mvmt_type
         else:
@@ -777,7 +781,7 @@ class GymnasticMovementType(MovementBase):
     def __str__(self):
         return self.to_str()
 
-    def __repr__(self, env=None, eval_exprs=False):
+    def __repr__(self, env={}, eval_exprs=False):
         if not self.height:
             return "<" + self.cls_name() + "(" + self.mvmt_type + ")>"
         else:

@@ -78,3 +78,12 @@ def test_program_get_work(program_str):
     work = program.get_work(TEST_ATHLETE)
     print(f"\nprogram type: {type(program.program)}")
     print(f"work: {work}")
+
+
+@pytest.mark.parametrize("program_str", TEST_PROGRAMS)
+def test_program_describe(program_str):
+    program = Program(Program.from_ir(fitest_lang.dsl.parse(program_str)), name='test_workout')
+    print(f"\n{program_str}")
+    print(f"program type: {type(program.program)}")
+    for by in ['mvmt_type','mvmt_emphasis','mvmt_category']: 
+        print(f"program '{by}': {program.describe(by=by)}")
