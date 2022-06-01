@@ -17,13 +17,11 @@ class Timers:
 
 @dataclass
 class Stopwatch:
-    time: timedelta
     desc: str
 
     def __dict__(self): 
         return {
-            'type': 'stopwatch',
-            'time': self.time.__dict__(), 
+            'type': 'stopwatch', 
             'desc': self.desc
         }
 
@@ -36,8 +34,8 @@ class Timer:
     def __dict__(self): 
         return {
             'type': 'timer',
-            'time': self.time.__dict__(), 
-            'desc': self.desc
+            'time': { 'seconds': self.time.total_seconds() }, 
+            'desc': self.desc if type(self.desc) == str else self.desc.to_json()
         }
 
 
@@ -49,7 +47,7 @@ class TimeCap:
     def __dict__(self): 
         return {
             'type': 'timecap',
-            'time': self.time.__dict__(), 
-            'desc': self.desc
+            'time': { 'seconds': self.time.total_seconds() }, 
+            'desc': self.desc if type(self.desc) == str else self.desc.to_json()
         }
         

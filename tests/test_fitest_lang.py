@@ -8,6 +8,7 @@ from fitest_lang.athlete import Athlete
 import fitest_lang.dsl
 from fitest_lang.program import Program, TaskPriorityBase, TaskPriority, TimePriorityBase, TimePriority
 from fitest_lang.quantity import Weight, Length, Work
+from fitest_lang.timer import Timers
 
 
 TEST_PROGRAMS = [
@@ -39,7 +40,7 @@ TEST_PROGRAMS = [
     + "\n\nAMRAP 4 min:\n15 cal row\n15 20 lb 14 ft wallball\n15 pullup ;\n\n2 min rest"
     + "\n\nAMRAP 4 min:\n20 cal row\n20 20 lb 14 ft wallball\n20 pullup ;",
     "for N in 100 80 60 40 20:\nN double_under\n(N / 2) situp\n(N / 10) 225 lb barbell deadlift ;",
-    "AMRAP 20 min:\n4 rounds:\n400 meter run\n30 20 lb 14 ft wallball\n20 pullup ; ;",
+    "AMRAP 20 min:\n400 meter run\n30 20 lb 14 ft wallball\n20 pullup ; ",
     "in 20 min:\n4 rounds:\n400 meter run\n30 20 lb 14 ft wallball\n20 pullup ; ;"
 ]
 
@@ -96,5 +97,16 @@ def test_program_ir_to_timer_objs(program_str):
     program = Program(Program.from_ir(fitest_lang.dsl.parse(program_str)), name='test_workout')
     print(f"\n{program_str}")
     print(f"\nprogram type: {type(program.program)}")
-    print(f"program type to timer object:\n{program.to_timer_objs()}")
+    tos = program.to_timer_objs()
+    assert type(tos) == Timers, "results should be of type Timers"
+    print(f"program type to timer object:\n{tos}")
+
+@pytest.mark.parametrize("program_str", TEST_PROGRAMS)
+def test_program_ir_to_timer_obj_jsons(program_str):
+    program = Program(Program.from_ir(fitest_lang.dsl.parse(program_str)), name='test_workout')
+    print(f"\n{program_str}")
+    print(f"\nprogram type: {type(program.program)}")
+    to_jsons = program.to_timer_objs().to_json()
+    assert type(to_jsons) == list, "results should be of type list"
+    print(f"program type to timer object json:\n{to_jsons}")
 

@@ -710,17 +710,13 @@ class TaskPriorityBase(ProgramBase):
         return list(it.zip_longest(self.reps, self.seq, self.rest))
 
     def to_timer_objs(self, by_round=False, env={}, eval_exprs=False):
-        times, seq_strs = [], []
+        timer_objs = [] 
         for rep, seq, rest in self.to_list():
             reps_type = type(rep)
             if not by_round and not any([type(mvmt.magnitude) == Time for mvmt in seq.movements]) \
                and not seq.rest and not reps_type == Variable: 
                 # add time and mvmt_seq
-                times = times + [datetime.timedelta(0)]
-                s = '' 
-                s = s + rep.__str__() + ':\n'
-                s = s + seq.to_str(include_rest=False) + '\n'
-                seq_strs = seq_strs + [s]
+                timer_objs += [Stopwatch(rep.__str__() + ':\n' + seq.to_str(include_rest=False) + '\n')]
             else:
                 if any([type(mvmt.magnitude) == Time for mvmt in seq.movements]):
                     mvmt_list = seq.to_list()
@@ -731,12 +727,10 @@ class TaskPriorityBase(ProgramBase):
                         for k in range(num_mvmts):
                             mvmt = mvmt_list[k]
                             if not type(mvmt) == Rest: 
-                                times = times + [datetime.timedelta(**mvmt.magnitude.to_dict(env=env))]
-                                seq_strs = seq_strs +\
-                                    [s + ("movement " + str(k + 1) + " of " + str(num_mvmts) + ':\n') + mvmt.__str__() + '\n']
+                                timer_objs += [Timer(datetime.timedelta(**mvmt.magnitude.to_dict(env=env)),
+                                                     "movement " + str(k + 1) + " of " + str(num_mvmts) + ':\n' + mvmt.__str__() + '\n')]
                             else: 
-                                times = times + [datetime.timedelta(**mvmt.magnitude.to_dict(env=env))]
-                                seq_strs = seq_strs + [s + 'rest']
+                                timer_objs += [Timer(datetime.timedelta(**mvmt.magnitude.to_dict(env=env)), 'rest')]
                 elif reps_type == Repetition: 
                     num_rds = rep.magnitude.eval_exprs()
                     mvmt_list = seq.to_list()
@@ -744,27 +738,22 @@ class TaskPriorityBase(ProgramBase):
                         s = 'round ' + str(j + 1) + ' of ' + str(num_rds) + ':\n'
                         for mvmt in mvmt_list: 
                             if not type(mvmt) == Rest: 
-                                times = times + [datetime.timedelta(0)]
-                                seq_strs = seq_strs + [s + seq.to_str(include_rest=False) + '\n']
+                                timer_objs += [Stopwatch(s + seq.to_str(include_rest=False) + '\n')]
                             else: 
-                                times = times + [datetime.timedelta(**mvmt.magnitude.to_dict(env=env))]
-                                seq_strs = seq_strs + [s + 'rest']
+                                timer_objs += [Timer(datetime.timedelta(**mvmt.magnitude.to_dict(env=env)), 'rest')]
                 elif reps_type == Variable:
                     var_name = rep.name
                     int_list = rep.ints
                     num_rds = len(int_list)
                     for j in range(num_rds): 
-                        times = times + [datetime.timedelta(0)]
-                        s = 'round ' + str(j + 1) + ' of ' + str(num_rds) + ':\n'
-                        s = s + seq.to_str(include_rest=False, env={var_name: int_list[j]}, eval_exprs=True) + '\n'
-                        seq_strs = seq_strs + [s]
+                        timer_objs += [Stopwatch(('round ' + str(j + 1) + ' of ' + str(num_rds) + ':\n'
+                                                  + seq.to_str(include_rest=False, env={var_name: int_list[j]}, eval_exprs=True) + '\n'))]
                         if seq.rest:
-                            times = times + [datetime.timedelta(**seq.rest[j].magnitude.to_dict(env=env))]
-                            seq_strs = seq_strs + ['rest']
+                            timer_objs += [Timer(datetime.timedelta(**seq.rest[j].magnitude.to_dict(env=env)), 'rest')]
             if rest: 
-                times = times + [rest.get_time().to_timedelta()]
-                seq_strs = seq_strs + ['rest']
-        return(list(zip(times, seq_strs)))
+                timer_objs += [Timer(rest.get_time().to_timedelta(), 'rest')]
+
+        return Timers(timer_objs)
 
     def to_str(self, by_round=False, eval_exprs=False):
         s = ""
