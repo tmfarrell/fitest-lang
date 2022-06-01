@@ -9,6 +9,7 @@ import numpy as np
 from .baseobject import FitestObject, FitestBaseObject
 from .expression import Value, Variable
 from .quantity import Quantity, Work, Time, Weight, Length, Repetition
+from .timer import Timers, Timer, Stopwatch
 
 
 class MovementBase(FitestBaseObject, FitestObject):
@@ -148,6 +149,9 @@ class MovementSeq(MovementBase):
         total = np.sum(list(d.values()))
         return {k: round(v / total, 3) for k, v in d.items()}
 
+    def mvmt_reps_list(self):
+        return [m.magnitude for m in self.movements]
+
     def to_list(self):
         if len(self.rest) > 1:
             return [
@@ -160,35 +164,27 @@ class MovementSeq(MovementBase):
         else:
             return self.movements
 
-    def mvmt_reps_list(self):
-        return [m.magnitude for m in self.movements]
-
     def to_timer_objs(self, env={}, eval_exprs=False):
-        s = ""
-        times, seq_strs = [], []
+        timer_objs = [] 
         if len(self.rest) > 1:
             for (mvmt, rest) in it.zip_longest(self.movements, self.rest):
                 if type(mvmt.magnitude) != Time:
-                    times = times + [datetime.timedelta(seconds=0)]
-                    seq_strs = seq_strs + [mvmt.to_str(env=env, eval_exprs=eval_exprs)]
+                    timer_objs += [Stopwatch(mvmt.to_str(env=env, eval_exprs=eval_exprs))]
                 else:
-                    times = times + [datetime.timedelta(**mvmt.magnitude.to_dict())]
-                    seq_strs = seq_strs + [mvmt.to_str(env=env, eval_exprs=eval_exprs)]
+                    timer_objs += [Timer(datetime.timedelta(**mvmt.magnitude.to_dict()), 
+                                         mvmt.to_str(env=env, eval_exprs=eval_exprs))]
                 if rest:
-                    times = times + [datetime.timedelta(**rest.magnitude.to_dict())]
-                    seq_strs = seq_strs + ["rest"]
+                    timer_objs += [Timer(datetime.timedelta(**rest.magnitude.to_dict()), 'rest')]
         else:
             for mvmt in self.movements:
                 if type(mvmt.magnitude) != Time:
-                    times = times + [datetime.timedelta(seconds=0)]
-                    seq_strs = seq_strs + [mvmt.to_str(env=env, eval_exprs=eval_exprs)]
+                    timer_objs += [Stopwatch(mvmt.to_str(env=env, eval_exprs=eval_exprs))]
                 else:
-                    times = times + [datetime.timedelta(**mvmt.magnitude.to_dict())]
-                    seq_strs = seq_strs + [mvmt.to_str(env=env, eval_exprs=eval_exprs)]
+                    timer_objs += [Timer(datetime.timedelta(**mvmt.magnitude.to_dict()), 
+                                         mvmt.to_str(env=env, eval_exprs=eval_exprs))]
             if self.rest and include_rest:
-                times = times + [datetime.timedelta(**self.rest[0].magnitude.to_dict())]
-                seq_strs = seq_strs + ["rest"]
-        return list(zip(times, seq_strs))
+                timer_objs += [Timer(datetime.timedelta(**rest.magnitude.to_dict()), 'rest')]
+        return Timers(timer_objs)
 
     def to_str(self, include_rest=True, env={}, eval_exprs=False):
         s = ""
@@ -223,7 +219,7 @@ class MovementSeq(MovementBase):
         if top:
             return {
                 "type": "MovementSeq",
-                "timer_objs": [(t.seconds, s) for t, s in self.to_timer_objs()],
+                "timer_objs": self.to_timer_objs().to_json(),
                 "str": self.__str__(),
                 "ir": ir,
             }
@@ -370,10 +366,10 @@ class EnduranceMovement(Movement):
             return (
                 self.magnitude.to_str(env=env, eval_exprs=eval_exprs)
                 + " "
-                + self.mvmt_type.to_str(env=env, eval_exprs=eval_exprs)
+                + self.mvmt_type
             )
         except:
-            return str(self.magnitude) + " " + str(self.mvmt_type)
+            return str(self.magnitude) + " " + self.mvmt_type
 
     def to_ir(self):
         return {

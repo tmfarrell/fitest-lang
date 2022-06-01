@@ -10,6 +10,7 @@ from .baseobject import FitestBaseObject, FitestObject
 from .expression import Variable, Value
 from .quantity import Repetition, Time, Work
 from .movement import MovementSeq, Rest
+from .timer import Timers, Timer, Stopwatch, TimeCap
 
 
 class ProgramBase(FitestBaseObject, FitestObject):
@@ -58,6 +59,9 @@ class Program(ProgramBase):
 
     def describe(self, by="mvmt_category"):
         return self.program.describe(by=by)
+
+    def to_timer_objs(self, env={}, eval_exprs=False): 
+        return(self.program.to_timer_objs(env=env, eval_exprs=eval_exprs))
 
     def to_ir(self, top=False, env={}, eval_exprs=False):
         ir = {"Program": self.program.to_ir()}
@@ -195,6 +199,34 @@ class TaskPriority(ProgramBase):
     def to_list(self):
         return list(it.zip_longest(self.reps, self.seq, self.rest))
 
+    def to_timer_objs(self, env={}, eval_exprs=False): 
+        timers = [] 
+        for i in range(len(self.reps)): 
+            reps_type = type(self.reps[i])
+            
+            if reps_type == Repetition: 
+                if type(self.reps[i].magnitude) == Value: 
+                    num_rds = self.reps[i].magnitude.val
+                else: 
+                    num_rds = self.reps[i].magnitude
+                for j in range(num_rds):
+                    timer_objs = self.seq[i].to_timer_objs().to_list()
+                    for t in timer_objs: 
+                        t.desc = 'round ' + str(j + 1) + ' of ' + str(num_rds) + ':\n' + t.desc
+                    timers += timer_objs
+            
+            elif reps_type == Variable:
+                var_name = self.reps[i].name
+                int_list = self.reps[i].ints
+                num_rds = len(int_list)
+                for j in range(num_rds): 
+                    timer_objs = self.seq[i].to_timer_objs(env={var_name: int_list[j]}, eval_exprs=True).to_list()
+                    for t in timer_objs: 
+                        t.desc = 'round ' + str(j + 1) + ' of ' + str(num_rds) + ':\n' + t.desc
+                    timers += timer_objs
+        
+        return Timers(timers)
+
     def to_ir(self, top=False, env={}, eval_exprs=False):
         ir = {
             "TaskPriority": {
@@ -300,6 +332,20 @@ class TimePriority(ProgramBase):
     def to_list(self):
         return list(it.zip_longest(self.time, self.seq, self.rest))
 
+    def to_timer_objs(self, env={}, eval_exprs=False): 
+        timer_objs = []
+        for time, seq, rest in self.to_list(): 
+            if rest: 
+                timer_objs += [
+                    Timer(datetime.timedelta(**time.to_dict()), seq.to_timer_objs(env=env, eval_exprs=eval_exprs)), 
+                    Timer(datetime.timedelta(**rest.magnitude.to_dict()), 'rest')
+                ]
+            else: 
+                timer_objs += [
+                    Timer(datetime.timedelta(**time.to_dict()), seq.to_timer_objs(env=env, eval_exprs=eval_exprs))
+                ]
+        return Timers(timer_objs)
+
     def to_ir(self, top=False):
         ir = {
             "TimePriority": {
@@ -388,6 +434,20 @@ class TimeCappedTask(ProgramBase):
 
     def to_list(self):
         return list(it.zip_longest(self.time, self.seq, self.rest))
+
+    def to_timer_objs(self, env={}, eval_exprs=False): 
+        timer_objs = []
+        for time, seq, rest in self.to_list(): 
+            if rest: 
+                timer_objs += [
+                    TimeCap(datetime.timedelta(**time.to_dict()), seq.to_timer_objs(env=env, eval_exprs=eval_exprs)), 
+                    Timer(datetime.timedelta(**rest.magnitude.to_dict()), 'rest')
+                ]
+            else: 
+                timer_objs += [
+                    TimeCap(datetime.timedelta(**time.to_dict()), seq.to_timer_objs(env=env, eval_exprs=eval_exprs))
+                ]
+        return Timers(timer_objs)
 
     def to_ir(self, top=False):
         ir = {
@@ -498,6 +558,20 @@ class TimePriorityBase(ProgramBase):
     def to_list(self):
         return list(it.zip_longest(self.time, self.seq, self.rest))
 
+    def to_timer_objs(self, env={}, eval_exprs=False): 
+        timer_objs = []
+        for time, seq, rest in self.to_list():
+            # add time and mvmt_seq
+            time =  datetime.timedelta(**time.to_dict())
+            desc = 'AMRAP ' + time.__str__() + ':\n'
+            desc += seq.to_str(include_rest=False, env=env, eval_exprs=eval_exprs)
+            timer_objs += [Timer(time, desc)]   
+            # add rest
+            if rest: 
+                timer_objs += [Timer(datetime.timedelta(**rest.magnitude.to_dict()), 'rest')]
+        
+        return Timers(timer_objs)
+
     def to_ir(self, top=False):
         ir = {
             "TimePriorityBase": {
@@ -575,7 +649,7 @@ class TaskPriorityBase(ProgramBase):
     def get_rds(self):
         return [r.to_list() for r in self.reps]
 
-    def get_work(self, athlete, by_round=False, work_units="cal"):
+    def get_work(self, athlete, by_round=False, work_units="cal", env={}):
         ss = []
         for (reps, seq, _) in self.to_list():
             for j in range(reps.get_num_rds()):
@@ -606,7 +680,7 @@ class TaskPriorityBase(ProgramBase):
             else:
                 return sum(ss).to(work_units)
 
-    def describe(self, by="mvmt_category"):
+    def describe(self, env={}, by="mvmt_category"):
         rs = []
         for (reps, seq, rest) in self.to_list():
             for j in range(reps.get_num_rds()):
@@ -627,13 +701,59 @@ class TaskPriorityBase(ProgramBase):
         if sum(rs.values()) > 1.0:
             return dict(
                 **{"work": {k: v for k, v in rs.items() if k != "rest"}},
-                **{"rest": rs["rest"]} if "rest" is rs else {}
+                **{"rest": rs["rest"]} if "rest" in rs else {}
             )
         else:
             return rs
 
     def to_list(self):
         return list(it.zip_longest(self.reps, self.seq, self.rest))
+
+    def to_timer_objs(self, by_round=False, env={}, eval_exprs=False):
+        timer_objs = [] 
+        for rep, seq, rest in self.to_list():
+            reps_type = type(rep)
+            if not by_round and not any([type(mvmt.magnitude) == Time for mvmt in seq.movements]) \
+               and not seq.rest and not reps_type == Variable: 
+                # add time and mvmt_seq
+                timer_objs += [Stopwatch(rep.__str__() + ':\n' + seq.to_str(include_rest=False) + '\n')]
+            else:
+                if any([type(mvmt.magnitude) == Time for mvmt in seq.movements]):
+                    mvmt_list = seq.to_list()
+                    num_mvmts = len(mvmt_list)
+                    num_rds = rep.magnitude.eval_exprs()
+                    for j in range(num_rds): 
+                        s = 'round ' + str(j + 1) + ' of ' + str(num_rds) + ':\n'
+                        for k in range(num_mvmts):
+                            mvmt = mvmt_list[k]
+                            if not type(mvmt) == Rest: 
+                                timer_objs += [Timer(datetime.timedelta(**mvmt.magnitude.to_dict(env=env)),
+                                                     "movement " + str(k + 1) + " of " + str(num_mvmts) + ':\n' + mvmt.__str__() + '\n')]
+                            else: 
+                                timer_objs += [Timer(datetime.timedelta(**mvmt.magnitude.to_dict(env=env)), 'rest')]
+                elif reps_type == Repetition: 
+                    num_rds = rep.magnitude.eval_exprs()
+                    mvmt_list = seq.to_list()
+                    for j in range(num_rds): 
+                        s = 'round ' + str(j + 1) + ' of ' + str(num_rds) + ':\n'
+                        for mvmt in mvmt_list: 
+                            if not type(mvmt) == Rest: 
+                                timer_objs += [Stopwatch(s + seq.to_str(include_rest=False) + '\n')]
+                            else: 
+                                timer_objs += [Timer(datetime.timedelta(**mvmt.magnitude.to_dict(env=env)), 'rest')]
+                elif reps_type == Variable:
+                    var_name = rep.name
+                    int_list = rep.ints
+                    num_rds = len(int_list)
+                    for j in range(num_rds): 
+                        timer_objs += [Stopwatch(('round ' + str(j + 1) + ' of ' + str(num_rds) + ':\n'
+                                                  + seq.to_str(include_rest=False, env={var_name: int_list[j]}, eval_exprs=True) + '\n'))]
+                        if seq.rest:
+                            timer_objs += [Timer(datetime.timedelta(**seq.rest[j].magnitude.to_dict(env=env)), 'rest')]
+            if rest: 
+                timer_objs += [Timer(rest.get_time().to_timedelta(), 'rest')]
+
+        return Timers(timer_objs)
 
     def to_str(self, by_round=False, eval_exprs=False):
         s = ""
