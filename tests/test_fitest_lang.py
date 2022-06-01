@@ -39,6 +39,8 @@ TEST_PROGRAMS = [
     + "\n\nAMRAP 4 min:\n15 cal row\n15 20 lb 14 ft wallball\n15 pullup ;\n\n2 min rest"
     + "\n\nAMRAP 4 min:\n20 cal row\n20 20 lb 14 ft wallball\n20 pullup ;",
     "for N in 100 80 60 40 20:\nN double_under\n(N / 2) situp\n(N / 10) 225 lb barbell deadlift ;",
+    "AMRAP 20 min:\n4 rounds:\n400 meter run\n30 20 lb 14 ft wallball\n20 pullup ; ;",
+    "in 20 min:\n4 rounds:\n400 meter run\n30 20 lb 14 ft wallball\n20 pullup ; ;"
 ]
 
 TEST_ATHLETE = Athlete("Tim", Weight(160, "lb"), Length(67, "in"))
@@ -87,3 +89,12 @@ def test_program_describe(program_str):
     print(f"program type: {type(program.program)}")
     for by in ['mvmt_type','mvmt_emphasis','mvmt_category']: 
         print(f"program '{by}': {program.describe(by=by)}")
+
+
+@pytest.mark.parametrize("program_str", TEST_PROGRAMS)
+def test_program_ir_to_timer_objs(program_str):
+    program = Program(Program.from_ir(fitest_lang.dsl.parse(program_str)), name='test_workout')
+    print(f"\n{program_str}")
+    print(f"\nprogram type: {type(program.program)}")
+    print(f"program type to timer object:\n{program.to_timer_objs()}")
+

@@ -148,6 +148,9 @@ class MovementSeq(MovementBase):
         total = np.sum(list(d.values()))
         return {k: round(v / total, 3) for k, v in d.items()}
 
+    def mvmt_reps_list(self):
+        return [m.magnitude for m in self.movements]
+
     def to_list(self):
         if len(self.rest) > 1:
             return [
@@ -159,9 +162,6 @@ class MovementSeq(MovementBase):
             return self.movements + self.rest
         else:
             return self.movements
-
-    def mvmt_reps_list(self):
-        return [m.magnitude for m in self.movements]
 
     def to_timer_objs(self, env={}, eval_exprs=False):
         s = ""
