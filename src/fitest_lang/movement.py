@@ -61,7 +61,7 @@ class Rest(MovementBase):
 
 
 class MovementSeq(MovementBase):
-    def __init__(self, movements, rest=None):
+    def __init__(self, movements, rest=[]):
         self.movements = movements
         self.rest = rest
         self.valid = all([m.task_priority for m in movements]) or all(
@@ -249,6 +249,19 @@ class Movement(MovementBase):
 
 
 class EnduranceMovement(Movement):
+    _mvmt_emphasis = {
+        "run": "lower",
+        "swim": "full",
+        "bike": "lower",
+        "ski": "full",
+        "airbike": "full",
+        "row": "full",
+    }
+
+    _work_rep=Quantity(1, "cal")
+    _len_rep = Quantity(25, "meter")
+
+
     def __init__(self, magnitude, mvmt_type):
         self.magnitude = magnitude
         self.mvmt_type = mvmt_type
@@ -262,8 +275,10 @@ class EnduranceMovement(Movement):
             return Time()
 
     def get_reps(
-        self, env={}, len_rep=Quantity(25, "meter"), work_rep=Quantity(1, "cal")
+        self, env={}, len_rep=None, work_rep=None
     ):
+        len_rep = self._len_rep if len_rep is None else len_rep
+        work_rep = self._work_rep if work_rep is None else work_rep
         if type(self.magnitude) != Time:
             m = self.magnitude.eval_exprs(env=env)
             if type(m) == Length:
@@ -276,14 +291,7 @@ class EnduranceMovement(Movement):
             return Repetition()
 
     def get_mvmt_emphasis(self):
-        return {
-            "run": "lower",
-            "swim": "full",
-            "bike": "lower",
-            "ski": "full",
-            "airbike": "full",
-            "row": "full",
-        }[self.mvmt_type]
+        return self._mvmt_emphasis[self.mvmt_type]
 
     def get_magnitude(self, env={}):
         m = self.magnitude.eval_exprs(env=env)
@@ -407,10 +415,39 @@ class EnduranceMovement(Movement):
 
 
 class ObjectMovement(Movement):
-    def __init__(self, magnitude, weight, obj, mvmt_type, height, time=None):
+    _mvmt_emphasis = {
+        "clean": "lower",
+        "clean_and_jerk": "full",
+        "front_squat": "lower",
+        "deadlift": "lower",
+        "sumodeadlift": "lower",
+        "sumodeadlift_highpull": "full",
+        "push_press": "upper",
+        "push_jerk": "upper",
+        "split_jerk": "upper",
+        "shoulder_to_overhead": "upper",
+        "ground_to_overhead": "full",
+        "hang_clean": "lower",
+        "thruster": "full",
+        "back_squat": "lower",
+        "bench_press": "upper",
+        "swing": "full",
+        "wallball": "full",
+        "overhead_squat": "full"
+    }
+
+    _valid_obj_weights_lbs = {
+        'barbell': range(35, 401, 5),
+        'kettlebell': range(5, 151, 5),
+        'dumbbell': range(5, 251, 5)
+    }
+
+    def __init__(self, magnitude, weight, obj, mvmt_type, height=None, time=None):
+        assert obj in self._valid_obj_weights_lbs.keys()
+        self.obj = obj
+
         self.magnitude = magnitude
         self.weight = weight
-        self.obj = obj
         self.mvmt_type = mvmt_type
         self.height = height
         self.time_priority = type(magnitude) == Time
@@ -429,26 +466,7 @@ class ObjectMovement(Movement):
             return Repetition()
 
     def get_mvmt_emphasis(self):
-        return {
-            "clean": "lower",
-            "clean_and_jerk": "full",
-            "front_squat": "lower",
-            "deadlift": "lower",
-            "sumodeadlift": "lower",
-            "sumodeadlift_highpull": "full",
-            "push_press": "upper",
-            "push_jerk": "upper",
-            "split_jerk": "upper",
-            "shoulder_to_overhead": "upper",
-            "ground_to_overhead": "full",
-            "hang_clean": "lower",
-            "thruster": "full",
-            "back_squat": "lower",
-            "bench_press": "upper",
-            "swing": "full",
-            "wallball": "full",
-            "overhead_squat": "full"
-        }[self.mvmt_type]
+        return self._mvmt_emphasis[self.mvmt_type]
 
     def get_work(self, athlete, env={}):
         magnitude = self.magnitude.eval_exprs(env=env)
@@ -611,6 +629,26 @@ class ObjectMovement(Movement):
 
 
 class GymnasticMovement(Movement):
+    _mvmt_emphasis = {
+        "pushup": "upper",
+        "pullup": "upper",
+        "burpee": "full",
+        "burpee_pullup": "full",
+        "situp": "midline",
+        "ghd_situp": "midline",
+        "dip": "upper",
+        "muscle_up": "upper",
+        "pistol": "lower",
+        "squat": "lower",
+        "handstand_pushup": "upper",
+        "double_under": "full",
+        "toe_to_bar": "midline",
+        "knee_to_elbow": "midline",
+        "back_extension": "midline",
+        "hip_extension": "midline",
+        "box_jump": "lower",
+    }
+
     def __init__(self, magnitude, mvmt_type, time=None):
         self.magnitude = magnitude
         self.mvmt_type = mvmt_type
@@ -634,25 +672,7 @@ class GymnasticMovement(Movement):
             return Repetition()
 
     def get_mvmt_emphasis(self):
-        return {
-            "pushup": "upper",
-            "pullup": "upper",
-            "burpee": "full",
-            "burpee_pullup": "full",
-            "situp": "midline",
-            "ghd_situp": "midline",
-            "dip": "upper",
-            "muscle_up": "upper",
-            "pistol": "lower",
-            "squat": "lower",
-            "handstand_pushup": "upper",
-            "double_under": "full",
-            "toe_to_bar": "midline",
-            "knee_to_elbow": "midline",
-            "back_extension": "midline",
-            "hip_extension": "midline",
-            "box_jump": "lower",
-        }[self.mvmt_type.mvmt_type]
+        return self._mvmt_emphasis[self.mvmt_type.mvmt_type]
 
     def get_work(self, athlete, env={}):
         magnitude = self.magnitude.eval_exprs(env=env)

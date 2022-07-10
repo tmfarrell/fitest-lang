@@ -32,20 +32,6 @@ class Program(ProgramBase):
     def __init__(self, program, name=None, time=None, reps=None):
         self.program = program
         self.name = name
-        self.time = time
-        self.reps = reps
-
-    def set_time(self, t):
-        self.time = t
-
-    def get_time(self):
-        return self.program.get_time()
-
-    def set_reps(self, r):
-        self.reps = r
-
-    def get_reps(self):
-        return self.program.get_reps()
 
     def get_work(self, athlete):
         quantity_or_fcn = self.program.get_work(athlete)
